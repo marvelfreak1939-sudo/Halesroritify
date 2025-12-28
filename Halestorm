@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Halestorm Player</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <h1>🤘 Halestorm Only 🤘</h1>
+
+  <input id="search" type="text" placeholder="Search any Halestorm song…" autocomplete="off"/>
+  <button id="go">Search</button>
+
+  <ul id="results"></ul>
+
+  <audio id="player" controls></audio>
+
+  <script src="app.js"></script>
+</body>
+</html>
+body{background:#111;color:#eee;font-family:system-ui;text-align:center}
+h1{margin:.4em 0;font-size:2.2em}
+input{width:60%;padding:.5em;font-size:1.1em}
+button{padding:.5em 1.1em;font-size:1.1em;cursor:pointer}
+ul{list-style:none;padding:0;margin:2em auto;max-width:700px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1em}
+li{background:#222;border-radius:6px;padding:.7em;display:flex;align-items:center;gap:.7em}
+li img{border-radius:4px}
+li span{flex:1;text-align:left}
+audio{width:90%;margin-top:1em}
+const ITUNES = 'https://itunes.apple.com/search';
+const ARTIST = 'Halestorm';
+const LIMIT  = 200;
+
+const searchInput = document.getElementById('search');
+const goBtn       = document.getElementById('go');
+const resultsList = document.getElementById('results');
+const player      = document.getElementById('player');
+
+async function fetchSongs(term = '') {
+  const url = `${ITUNES}?term=${encodeURIComponent(ARTIST + ' ' + term)}&entity=song&limit=${LIMIT}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  return data.results.filter(t =>
+    t.wrapperType === 'track' &&
+    t.artistName.toLowerCase() === ARTIST.toLowerCase()
+  );
+}
+
+function render(tracks) {
+  resultsList.innerHTML = '';
+  tracks.forEach(t => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <img src="${t.artworkUrl60}" alt="cover"/>
+      <span>${t.trackName}</span>
+      <button data-preview="${t.previewUrl}">▶</button>
+    `;
+    resultsList.appendChild(li);
+  });
+}
+
+goBtn.addEventListener('click', async () => {
+  const tracks = await fetchSongs(searchInput.value.trim());
+  render(tracks);
+});
+
+resultsList.addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON') {
+    player.src = e.target.dataset.preview;
+    player.play();
+  }
+});
+
+window.addEventListener('DOMContentLoaded', () => goBtn.click());
